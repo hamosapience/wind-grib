@@ -1,0 +1,23 @@
+{
+  "name": "wind-grib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "._parse.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hamosapience/wind-grib.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hamosapience/wind-grib/issues"
+  },
+  "homepage": "https://github.com/hamosapience/wind-grib",
+  "dependencies": {
+    "csv": "^0.4.1",
+    "lodash": "^3.7.0"
+  }
+}

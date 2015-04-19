@@ -5,11 +5,16 @@ date_auto="$date_auto"00;
 params="UGRD:VGRD"
 levels="10_m_above_ground"
 
-# curl "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs.pl?file=gfs.t00z.pgrbf00.grib2&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=%2Fgfs.${date_auto}00" -o gfs.t00z.pgrbf00.grib2
+LEFT_LON=25 #долгота левой границы
+RIGHT_LON=175 #долгота правой границы
 
+UP_LAT=75 #широта верхней границы
+DOWN_LAT=40 #широта нижней границы
 
-# curl "http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs.pl?file=gfs.t00z.pgrbf00.grib2&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=%2Fgfs.2015041900" -o gfs.t00z.pgrbf00.grib2
+# perl get_gfs.pl data $date_auto 0 0 0 $params $levels .
 
+# декодирование grib-файла в csv формат
+./wgrib2 gfs.t00z.pgrb2.1p00.f000 -csv temp.csv
 
-# perl get_gfs.pl data $date_auto 0 48 6 $params $levels . &>> $logfile
-perl get_gfs.pl data $date_auto 0 0 0 $params $levels .
+# фильтрация по координатам
+cat temp.csv | awk -F ',' -v LL="$LEFT_LON" -v RL="$RIGHT_LON" -v UL="$UP_LAT" -v DL="$DOWN_LAT" '$5 >= LL && $5 <= RL && $6 >= DL && $6 <=UL' > data.csv 
