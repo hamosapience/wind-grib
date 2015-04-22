@@ -11,10 +11,12 @@ RIGHT_LON=175 #долгота правой границы
 UP_LAT=75 #широта верхней границы
 DOWN_LAT=40 #широта нижней границы
 
-# perl get_gfs.pl data $date_auto 0 0 0 $params $levels .
+perl get_gfs.pl data $date_auto 0 0 0 $params $levels .
 
 # декодирование grib-файла в csv формат
 ./wgrib2 gfs.t00z.pgrb2.1p00.f000 -csv temp.csv
 
 # фильтрация по координатам
 cat temp.csv | awk -F ',' -v LL="$LEFT_LON" -v RL="$RIGHT_LON" -v UL="$UP_LAT" -v DL="$DOWN_LAT" '$5 >= LL && $5 <= RL && $6 >= DL && $6 <=UL' > data.csv 
+
+node parse.js
