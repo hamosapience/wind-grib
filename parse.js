@@ -21,8 +21,8 @@ var DOWN_LAT = 40; // широта нижней границы
 var STEP = 1; // шаг координатной сетки
 
 function createCoordNet(){
-    var longitudeSteps = (RIGHT_LON - LEFT_LON)/STEP + 1;
-    var latitudeSteps = (UP_LAT - DOWN_LAT)/STEP + 1;
+    var longitudeSteps = (RIGHT_LON - LEFT_LON) / STEP + 1;
+    var latitudeSteps = (UP_LAT - DOWN_LAT) / STEP + 1;
     var arr = new Array(latitudeSteps);
     for (var i = 0; i < latitudeSteps; i++){
         arr[i] = new Array(longitudeSteps);
@@ -31,23 +31,44 @@ function createCoordNet(){
 }
 
 function calculateIndex(latitude, longitude){
-    return [(latitude - DOWN_LAT)/STEP, (longitude - LEFT_LON)/STEP];
+    return [(latitude - DOWN_LAT) / STEP, (longitude - LEFT_LON) / STEP];
 }
 
-// широта, долгота
-var coordNet = createCoordNet();
+function filterDataItem(dataItem){
+    return (
+        dataItem.longitude >= LEFT_LON &&
+        dataItem.longitude <= RIGHT_LON &&
+        dataItem.latitude >= DOWN_LAT &&
+        dataItem.latitude <= UP_LAT
+    );
+}
 
 var parser = csv.parse({
     columns: COLUMNS
-}, function(err, data){
-    
-    if (err){
+});
 
+var record;
+var dataItems = [];
+var coordNet = createCoordNet(); // широта, долгота
+
+
+parser.on('readable', function() {
+    while (record = parser.read()){
+        if (filterDataItem(record)){
+            dataItems.push(record);
+        }
     }
+});
+
+parser.on('error', function(err){
+    console.log(err.message); //FIXME: хорошо бы сразу сообщить об ошибке
+});
+
+parser.on('finish', function(){
 
     var date;
 
-    var coordHash = data.reduce(function(hash, item){
+    var coordHash = dataItems.reduce(function(hash, item){
         var key = item.latitude + ',' + item.longitude;
         var index = calculateIndex(item.latitude, item.longitude);
         date = item.time0;
@@ -77,3 +98,33 @@ var parser = csv.parse({
 });
 
 fs.createReadStream('./tmp/data.csv').pipe(parser);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
