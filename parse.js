@@ -62,7 +62,7 @@ var parser = csv.parse({
         coordNet[item.index[0]][item.index[1]] = [item.UGRD, item.VGRD];
     });
 
-    fs.writeFileSync('wind.json', JSON.stringify({
+    fs.writeFileSync('./tmp/wind.json~', JSON.stringify({
         meta: {
             LEFT_LON: LEFT_LON,
             RIGHT_LON: RIGHT_LON,
@@ -76,4 +76,4 @@ var parser = csv.parse({
 
 });
 
-fs.createReadStream('data.csv').pipe(parser);
+fs.createReadStream('./tmp/data.csv').pipe(parser);
