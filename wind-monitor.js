@@ -49,10 +49,15 @@ var SCHEMA = {
 
 var SOURCE_FILE = './tmp/wind.json~';
 var DEST_FILE = './tmp/wind.json';
+var LOG_FILE = './log/get.log';
 
 function notify(e){
     console.warn(e);
     pmx.notify(e);
+}
+
+function emit(event, data){
+    pmx.emit(event, data);
 }
 
 function wrap(f, errorType) {
@@ -90,7 +95,16 @@ function dataValidator(data){
 }
 
 function logValidator(){
-
+    try {
+        var log = fs.readFileSync(LOG_FILE, 'utf8');
+    }
+    catch (e){
+        return ('OPEN LOG ERROR ' + e);
+    }
+    var errors = log.match(/error/ig);
+    if (errors.length){
+        return ('ERROR IN LOG ' + log);
+    }
 }
 
 function worker(){
@@ -120,12 +134,14 @@ function worker(){
         fs.writeFile(DEST_FILE, data, function(error){
             if (error){
                 notify('RELEASE ERROR ' + error);
+                return;
             }
+            emit('data_update', {
+                ok: true
+            });
         });
     }
 
 }
 
-wrap(worker, 'RUNTIME ERROR')();
-
-// setInterval(wrap(worker, 'RUNTIME ERROR'), 10 * 60 * 1000);
+setInterval(wrap(worker, 'RUNTIME ERROR'), 10 * 60 * 1000);
