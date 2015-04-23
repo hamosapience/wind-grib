@@ -64,7 +64,9 @@ setInterval(function(){
                 }
 
                 fs.copy('./tmp/wind.json~', './tmp/wind.json', function(error){
-                    pmx.notify('RELEASE ERROR' + error);
+                    if (error){
+                        pmx.notify('RELEASE ERROR ' + error);
+                    }
                 });
 
             }
