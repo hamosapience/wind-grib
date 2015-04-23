@@ -1,4 +1,4 @@
-var fs = require('fs-extra');
+var fs = require('fs');
 var pmx = require('pmx');
 var jsonSchema = require('json-schema');
 
@@ -47,36 +47,85 @@ var SCHEMA = {
     "required": ["meta", "data"]
 };
 
-setInterval(function(){
+var SOURCE_FILE = './tmp/wind.json~';
+var DEST_FILE = './tmp/wind.json';
+
+function notify(e){
+    console.warn(e);
+    pmx.notify(e);
+}
+
+function wrap(f, errorType) {
+    return function() {
+        try {
+            return f.apply(this, arguments);
+        } catch(e) {
+            notify(errorType + ' ' + e);
+        }
+    };
+}
+
+function dataValidator(data){
 
     try {
-        fs.readFile('./tmp/wind.json~', function(error, data){
+        var parsed = JSON.parse(data);
+    }
+    catch (e){
+        return ('PARSE ERROR ' + e);
+    }
+
+    var validationResult = jsonSchema.validate(parsed, SCHEMA);
+    if (!validationResult.valid){
+        return ('SCHEMA VALIDATION ERROR ' + JSON.stringify(validationResult.errors));
+    }
+
+    var parsedDate = new Date(parsed.meta.date); // Dates in GRIB are in UTC+0 timezone
+    var currentDate = new Date();
+    if (parsedDate.getDate() !== currentDate.getUTCDate() ||
+        parsedDate.getMonth() !== currentDate.getUTCMonth() ||
+        parsedDate.getFullYear() !== currentDate.getUTCFullYear()
+    ){
+        return ('DATA OUTDATED ' + parsedDate + ' current: ' + currentDate.toUTCString());
+    }
+}
+
+function logValidator(){
+
+}
+
+function worker(){
+
+    var logValidationError = logValidator();
+    if (logValidationError){
+        notify(logValidationError);
+        return;
+    }
+
+    try {
+        var data = fs.readFileSync(SOURCE_FILE, 'utf8');
+        var currentData = fs.readFileSync(DEST_FILE, 'utf8');
+    }
+    catch(e){
+        notify('READ FILE ERROR ' + e);
+        return;
+    }
+
+    var validationError = dataValidator(data);
+    if (validationError){
+        notify(validationError);
+        return;
+    }
+
+    if (data !== currentData){
+        fs.writeFile(DEST_FILE, data, function(error){
             if (error){
-                pmx.notify('READ FILE ERROR ' + error);
-                return;
-            }
-            try {
-                var parsed = JSON.parse(data);
-                var validationResult = jsonSchema.validate(parsed, SCHEMA);
-                if (!validationResult.valid){
-                    pmx.notify('SCHEMA VALIDATION ERROR ' + JSON.stringify(validationResult.errors));
-                    return;
-                }
-
-                fs.copy('./tmp/wind.json~', './tmp/wind.json', function(error){
-                    if (error){
-                        pmx.notify('RELEASE ERROR ' + error);
-                    }
-                });
-
-            }
-            catch (e){
-                pmx.notify('PARSE ERROR ' + e);
+                notify('RELEASE ERROR ' + error);
             }
         });
     }
-    catch(e){
-        pmx.notify(e);
-    }
 
-}, 60 * 1000);
+}
+
+wrap(worker, 'RUNTIME ERROR')();
+
+// setInterval(wrap(worker, 'RUNTIME ERROR'), 10 * 60 * 1000);

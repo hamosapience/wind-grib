@@ -12,4 +12,7 @@ perl get_gfs.pl data $date_auto 0 0 0 $params $levels ./tmp
 # декодирование grib-файла в csv формат
 ./wgrib2 ./tmp/gfs.t00z.pgrb2.1p00.f000 -csv ./tmp/temp.csv
 
-node parse.js
+# node parse.js
+
+rm -f ./tmp/gfs.t00z.pgrb2.1p00.f000
+rm -f ./tmp/temp.csv

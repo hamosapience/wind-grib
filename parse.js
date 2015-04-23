@@ -61,7 +61,7 @@ parser.on('readable', function() {
 });
 
 parser.on('error', function(err){
-    console.log(err.message); //FIXME: хорошо бы сразу сообщить об ошибке
+    console.log("ERROR " + err.message);
 });
 
 parser.on('finish', function(){
@@ -97,7 +97,7 @@ parser.on('finish', function(){
 
 });
 
-fs.createReadStream('./tmp/data.csv').pipe(parser);
+fs.createReadStream('./tmp/temp.csv').pipe(parser);
 
 
 
