@@ -65,7 +65,7 @@ function wrap(f, errorType) {
         try {
             return f.apply(this, arguments);
         } catch(e) {
-            notify(errorType + ' ' + e);
+            notify(errorType + ' ' + e.message + ' ' + e.stack);
         }
     };
 }
@@ -102,7 +102,7 @@ function logValidator(){
         return ('OPEN LOG ERROR ' + e);
     }
     var errors = log.match(/error/ig);
-    if (errors.length){
+    if (errors){
         return ('ERROR IN LOG ' + log);
     }
 }
