@@ -47,16 +47,31 @@ var SCHEMA = {
     "required": ["meta", "data"]
 };
 
+var ERROR_TYPES = {
+    'PARSE_ERROR': 'PARSE ERROR',
+    'SCHEMA_VALIDATION_ERROR': 'SCHEMA VALIDATION ERROR',
+    'OPEN_LOG_ERROR': 'OPEN LOG ERROR',
+    'GET_ERROR': 'GET ERROR',
+    'READ_FILE_ERROR': 'READ FILE ERROR',
+    'RELEASE_ERROR': 'RELEASE ERROR',
+    'RUNTIME_ERROR': 'RUNTIME ERROR'
+};
+
 var SOURCE_FILE = './tmp/wind.json~';
 var DEST_FILE = './tmp/wind.json';
 var LOG_FILE = './log/get.log';
 
-function notify(e){
-    console.warn(e);
-    pmx.notify(e);
+var MONITOR_INTERVAL = 10 * 60 * 1000;
+
+function notify(errorType, error){
+    var msg = ( (new Date()).toJSON() + ' ERROR[' + errorType + '] ' + error );
+
+    console.log(msg);
+    pmx.notify(msg);
 }
 
-function emit(event, data){
+function log(event, data){
+    console.log( (new Date()).toJSON() + ' LOG[' + event + '] ' + JSON.stringify(data) );
     pmx.emit(event, data);
 }
 
@@ -65,7 +80,7 @@ function wrap(f, errorType) {
         try {
             return f.apply(this, arguments);
         } catch(e) {
-            notify(errorType + ' ' + e.message + ' ' + e.stack);
+            notify(errorType, e.message + ' ' + e.stack);
         }
     };
 }
@@ -76,12 +91,12 @@ function dataValidator(data){
         var parsed = JSON.parse(data);
     }
     catch (e){
-        return ('PARSE ERROR ' + e);
+        return (ERROR_TYPES.PARSE_ERROR, e);
     }
 
     var validationResult = jsonSchema.validate(parsed, SCHEMA);
     if (!validationResult.valid){
-        return ('SCHEMA VALIDATION ERROR ' + JSON.stringify(validationResult.errors));
+        return ERROR_TYPES.SCHEMA_VALIDATION_ERROR;
     }
 
     var parsedDate = new Date(parsed.meta.date); // Dates in GRIB are in UTC+0 timezone
@@ -90,7 +105,7 @@ function dataValidator(data){
         parsedDate.getMonth() !== currentDate.getUTCMonth() ||
         parsedDate.getFullYear() !== currentDate.getUTCFullYear()
     ){
-        return ('DATA OUTDATED ' + parsedDate + ' current: ' + currentDate.toUTCString());
+        // return ('DATA OUTDATED ' + parsedDate + ' current: ' + currentDate.toUTCString());
     }
 }
 
@@ -99,11 +114,11 @@ function logValidator(){
         var log = fs.readFileSync(LOG_FILE, 'utf8');
     }
     catch (e){
-        return ('OPEN LOG ERROR ' + e);
+        return (ERROR_TYPES.OPEN_LOG_ERROR, e);
     }
     var errors = log.match(/error/ig);
     if (errors){
-        return ('ERROR IN LOG ' + log);
+        return (ERROR_TYPES.GET_ERROR, log);
     }
 }
 
@@ -120,23 +135,23 @@ function worker(){
         var currentData = fs.readFileSync(DEST_FILE, 'utf8');
     }
     catch(e){
-        notify('READ FILE ERROR ' + e);
+        notify(ERROR_TYPES.READ_FILE_ERROR, e);
         return;
     }
 
     var validationError = dataValidator(data);
     if (validationError){
-        notify(validationError);
+        notify(validationError, '');
         return;
     }
 
     if (data !== currentData){
         fs.writeFile(DEST_FILE, data, function(error){
             if (error){
-                notify('RELEASE ERROR ' + error);
+                notify(ERROR_TYPES.RELEASE_ERROR, error);
                 return;
             }
-            emit('data_update', {
+            log('data_update', {
                 ok: true
             });
         });
@@ -144,4 +159,6 @@ function worker(){
 
 }
 
-setInterval(wrap(worker, 'RUNTIME ERROR'), 10 * 60 * 1000);
+MONITOR_INTERVAL = 2000
+
+setInterval(wrap(worker, ERROR_TYPES.RUNTIME_ERROR), MONITOR_INTERVAL);
