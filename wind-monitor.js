@@ -53,7 +53,8 @@ var ERROR_TYPES = {
     'GET_ERROR': 'GET ERROR',
     'READ_FILE_ERROR': 'READ FILE ERROR',
     'RELEASE_ERROR': 'RELEASE ERROR',
-    'RUNTIME_ERROR': 'RUNTIME ERROR'
+    'RUNTIME_ERROR': 'RUNTIME ERROR',
+    'DEST_FILE_EMPTY': 'DEST FILE EMPTY'
 };
 
 var SOURCE_FILE = './tmp/wind.json~';
@@ -129,11 +130,18 @@ function worker(){
 
     try {
         var data = fs.readFileSync(SOURCE_FILE, 'utf8');
-        var currentData = fs.readFileSync(DEST_FILE, 'utf8');
     }
     catch(e){
         notify(ERROR_TYPES.READ_FILE_ERROR, e);
         return;
+    }
+
+    var currentData = '';
+    try {
+        currentData = fs.readFileSync(DEST_FILE, 'utf8');
+    }
+    catch(e){
+        log(ERROR_TYPES.DEST_FILE_EMPTY, '');
     }
 
     var validationError = dataValidator(data);

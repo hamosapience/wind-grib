@@ -1,2 +1,3 @@
 #!/bin/sh
-node wind-monitor.js
+
+cd ${DIR} && ${NODE} wind-monitor.js 

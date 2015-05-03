@@ -6,19 +6,27 @@ MAINTAINER Kalentine Vamenek
 # Use baseimage-docker's init system.
 CMD ["/sbin/my_init"]
 
-RUN apt-get update && apt-get install nodejs
+RUN apt-get update && apt-get install -y nodejs && apt-get install -y npm
 
-ENV DIR /src 
+ENV DIR /src/
+ENV PATH /usr/local/bin:$PATH
+ENV NODE nodejs
 
-COPY . ${DIR}
+ADD package.json /tmp/package.json
+RUN cd /tmp && npm install
+RUN mkdir -p ${DIR} && cp -a /tmp/node_modules ${DIR}
+
 WORKDIR ${DIR}
-RUN npm install && ./init.sh
-VOLUME ./data
+COPY . ${DIR}
 
+RUN ./init.sh
 
 RUN mkdir /etc/service/wind-grib
-ADD start.sh /etc/service/wind-grib/run
+COPY start.sh /etc/service/wind-grib/run
 
+RUN mkdir -p /etc/my_init.d
+ADD first_fetch.sh /etc/my_init.d/first_fetch.sh
 
-# Clean up APT when done.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+VOLUME ./data
