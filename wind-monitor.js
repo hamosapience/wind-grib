@@ -1,5 +1,4 @@
 var fs = require('fs');
-var pmx = require('pmx');
 var jsonSchema = require('json-schema');
 
 var SCHEMA = {
@@ -58,7 +57,7 @@ var ERROR_TYPES = {
 };
 
 var SOURCE_FILE = './tmp/wind.json~';
-var DEST_FILE = './tmp/wind.json';
+var DEST_FILE = './data/wind.json';
 var LOG_FILE = './log/get.log';
 
 var MONITOR_INTERVAL = 10 * 60 * 1000;
@@ -67,12 +66,10 @@ function notify(errorType, error){
     var msg = ( (new Date()).toJSON() + ' ERROR[' + errorType + '] ' + error );
 
     console.log(msg);
-    pmx.notify(msg);
 }
 
 function log(event, data){
     console.log( (new Date()).toJSON() + ' LOG[' + event + '] ' + JSON.stringify(data) );
-    pmx.emit(event, data);
 }
 
 function wrap(f, errorType) {
